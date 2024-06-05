@@ -4,3 +4,5 @@ It basically removes everything that is not a difficulty file and the song itsel
 Optionally you can choose a custom bg to replace in every song.
 
 Feel free to open issue if you have any suggestions on the optimization.
+
+Python 3.12 is used btw
