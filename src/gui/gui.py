@@ -12,6 +12,7 @@ from ..utils import get_resource_path
 
 
 class BackgroundModes(Enum):
+    """Enum описывающий настройки работы с фонами"""
     KEEP = "keep"
     WHITE = "white"
     DELETE = "delete"
@@ -20,11 +21,13 @@ class BackgroundModes(Enum):
 
 class SHXCleanerApp:
     def start_gui(self):
+        """Запускает GUI приложения"""
         self.__init_components()
         self.__center_window(320, 250)
         self.root.mainloop()
 
     def __init_components(self):
+        """Инициализирует компоненты GUI"""
         self.root = Tk()
         self.root.title("sh(x)cleaner")
 
@@ -84,6 +87,7 @@ class SHXCleanerApp:
         self.start_button.pack(pady=20)
 
     def __center_window(self, width, height):
+        """Центрирует окно приложения на экране"""
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width // 2) - (width // 2)
@@ -91,18 +95,20 @@ class SHXCleanerApp:
         self.root.geometry(f'{width}x{height}+{x}+{y}')
 
     def __pick_params(self) -> CleanerParams:
+        """Собирает параметры очистки из GUI"""
         user_images: dict[str, str] | None = None
         delete_images: bool = False
         delete_modes: list[OSUGameModes] = []
 
+        # Параметры работы с фоном
         bgs_option = BackgroundModes(self.bgs_var.get())
         if bgs_option == BackgroundModes.KEEP:
             user_images = None
             delete_images = False
         elif bgs_option == BackgroundModes.WHITE:
             user_images = {
-                ".png": get_resource_path("white.png"),
-                ".jpg": get_resource_path("white.jpg")
+                ".png": get_resource_path("assets/white.png"),
+                ".jpg": get_resource_path("assets/white.jpg")
             }
             delete_images = False
         elif bgs_option == BackgroundModes.DELETE:
@@ -126,6 +132,7 @@ class SHXCleanerApp:
             if not user_images:
                 user_images = None
 
+        # Параметры работы с режимами игры
         if self.osu_var.get() == 1:
             delete_modes.append(OSUGameModes.OSU)
         if self.taiko_var.get() == 1:
@@ -142,14 +149,17 @@ class SHXCleanerApp:
         }
 
     def __start_cleaning(self):
+        """Выполняет итоговую подготовку и запускает очистку карт"""
         self.root.withdraw()
 
+        # Спрашиваем папку, содержащую все карты
         songs_folder = filedialog.askdirectory(title="Select Songs Folder")
         if not songs_folder:
             messagebox.showerror("Fatal error", "Why you...")
             self.root.deiconify()
             return
 
+        # Получаем все вложенные папки
         folders = [
             Path(f) for f in os.listdir(songs_folder)
             if Path(songs_folder, f).is_dir()
@@ -160,14 +170,24 @@ class SHXCleanerApp:
         self.root.deiconify()
         self.__center_window(320, 250)
 
+        # Отключаем кнопку
         self.start_button.config(state=tkinter.DISABLED)
+
+        # Подготавливаем класс очистки
+        def __progress_step(folder_id: int):
+            # Коллбек для увеличения прогресса выполнения
+            self.progress.step()
+            self.progress_label.config(text=f"Cleaning {folder_id}...")
+            self.root.update_idletasks()
         cleaner = Cleaner(
             Path(songs_folder),
             self.__pick_params(),
-            self.__progress_step
+            __progress_step
         )
 
+        # Подготавливаем запуск очистки и запускаем
         def on_end():
+            # Коллбек для выполнения после очистки. Закрывает приложение
             messagebox.showinfo(
                 "Info",
                 "Everything's clean. Check the size of your songs folder lol"
@@ -175,8 +195,3 @@ class SHXCleanerApp:
             self.root.withdraw()
             self.root.quit()
         cleaner.start_clean_thread(folders, on_end)
-
-    def __progress_step(self, folder_id: int):
-        self.progress.step()
-        self.progress_label.config(text=f"Cleaning {folder_id}...")
-        self.root.update_idletasks()
