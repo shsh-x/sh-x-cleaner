@@ -14,7 +14,7 @@ To start doing funny things you can either:
 
 ### Run the Executable
 
-1. Download the `.exe` file from the releases section.
+1. Download the `.exe` file from the [releases](https://github.com/shsh-x/sh-x-cleaner/releases/latest) section.
 2. Run the `.exe` file.
 
 ### Build the Executable
@@ -46,7 +46,7 @@ If you prefer to build the executable yourself:
 
 ## Issues and Contributions
 
-If you have any suggestions for optimization or encounter any issues, feel free to open an issue on the project's repository.
+If you have any suggestions for optimization or encounter any issues, feel free to open an [issue](https://github.com/shsh-x/sh-x-cleaner/issues) on the project's repository.
 
 ---
 
