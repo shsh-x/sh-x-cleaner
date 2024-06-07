@@ -10,6 +10,7 @@ _IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+\.(?:jpg|png))\"')
 
 
 class OSUGameModes(Enum):
+    """Enum описывающий режимы игры"""
     OSU = 0
     TAIKO = 1
     CATCH = 2
@@ -18,6 +19,8 @@ class OSUGameModes(Enum):
 
 @dataclass
 class OSUFile:
+    """Класс описывающий файл osu"""
+
     filename: str
     """Имя файла"""
     audio_filename: str
@@ -30,6 +33,8 @@ class OSUFile:
 
 @dataclass
 class OSUFilesFolder:
+    """Класс описывающий папку файлов osu"""
+
     osu_files: list[OSUFile]
     """Объекты файлов osu"""
     osu_filenames: set[str]

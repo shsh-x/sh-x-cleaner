@@ -3,6 +3,8 @@ import shlex
 import subprocess
 from pathlib import Path
 
+# Скрипт запуска One-File EXE проекта
+
 if __name__ == "__main__":
     name = "sh(x)cleaner"
     entry_point = "main.py"

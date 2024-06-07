@@ -105,6 +105,7 @@ class Cleaner:
         self.params = params
         self.progress_step = progress_step
 
+        # Подгружаем обработанные карты из json
         self.proc_folders_json_path = Path(
             songs_folder,
             "processed_folders.json"
@@ -112,6 +113,7 @@ class Cleaner:
         self.processed_folders = self.__load_proc_folders()
 
     def __load_proc_folders(self) -> list[int]:
+        """Загружает уже обработанные карты из json файла"""
         if not self.proc_folders_json_path.exists():
             return []
 
@@ -119,24 +121,31 @@ class Cleaner:
             return json.load(json_file)
 
     def __dump_proc_folders(self):
+        """Сохраняет уже обработанные карты в json файл"""
         with open(self.proc_folders_json_path, 'w') as json_file:
             json.dump(self.processed_folders, json_file)
 
     def start_clean(self, folders: list[Path]):
+        """Запускает очистку карт OSU"""
         for index, folder in enumerate(folders):
             folder_path = Path(self.songs_folder, folder)
 
             folder_name = folder_path.name
+            # Пропускаем, если папка не содержит ID карты
             if not (folder_id_match := re.match(r'^(\d+)', folder_name)):
                 continue
             folder_id = int(folder_id_match.group(1))
+            # Пропускаем, если эта карта уже обработана
             if folder_id in self.processed_folders:
                 continue
 
+            # Запускаем очистку папки карты
             _FolderCleaner(folder_path, self.params).clean()
             self.processed_folders.append(folder_id)
+            # Выполняем коллбек на увеличение прогресса выполнения
             self.progress_step(folder_id)
 
+            # Выполняем дамп обработанных карт каждые 100 итераций
             if (index + 1) % 100 == 0:
                 self.__dump_proc_folders()
         self.__dump_proc_folders()
