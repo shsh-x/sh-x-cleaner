@@ -27,18 +27,51 @@ If you prefer to build the executable yourself:
    pip install pyinstaller
    ```
 
-2. Run the build script:
+2. (Optional) Create and activate a virtual environment:
+
+   ```sh
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. Install dependencies from `requirements.txt`:
+
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+4. If using a virtual environment, set the `use_venv` and `venv_path` parameters in `build_exe.py`:
+
+   ```python
+   use_venv = True
+   venv_path = 'venv'
+   ```
+
+5. Run the build script:
 
    ```sh
    python build_exe.py
    ```
 
-3. Run the generated `.exe` file (putted to dist directory).
+6. Run the generated `.exe` file (located in the `dist` directory).
 
 ### Run the Script Directly (are you scared of .exe?)
 
 1. Ensure Python 3.12 is installed on your system.
-2. Run the script directly:
+2. (Optional) Create and activate a virtual environment:
+
+   ```sh
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. Install dependencies from `requirements.txt`:
+
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+4. Run the script directly:
 
    ```sh
    python main.py
