@@ -125,7 +125,7 @@ def start_cleaning():
     progress['maximum'] = len(all_folders)
     progress['value'] = 0
     root.deiconify()
-    center_window(root, 320, 230)
+    center_window(root, 320, 250)
     
     for index, folder in enumerate(all_folders):
         folder_name = os.path.basename(folder)
