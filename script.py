@@ -189,6 +189,6 @@ progress.pack(padx=10)
 start_button = Button(root, text="Destroy everything", command=start_cleaning)
 start_button.pack(pady=20)
 
-center_window(root, 320, 230)
+center_window(root, 320, 250)
 
 root.mainloop()
