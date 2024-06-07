@@ -245,7 +245,7 @@ class SHXCleanerApp(QMainWindow):
             Path(songs_folder, f) for f in os.listdir(songs_folder)
             if Path(songs_folder, f).is_dir()
         ]
-        self.progress.setMaximum(len(folders) * 2)
+        self.progress.setMaximum(len(folders))
         self.progress.setValue(0)
 
         self.start_button.setEnabled(False)

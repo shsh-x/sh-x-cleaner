@@ -11,8 +11,8 @@ if __name__ == "__main__":
     noconsole = True
     icon = "assets/icon.ico"
     assets = {
-        "assets/white.png": ".",
-        "assets/white.jpg": "."
+        "assets/white.png": "./assets/",
+        "assets/white.jpg": "./assets/"
     }
     use_venv = False
     venv_path = "venv"
