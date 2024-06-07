@@ -2,7 +2,6 @@ import json
 import os
 import re
 import shutil
-import threading
 from pathlib import Path
 from typing import Callable, TypedDict
 
@@ -149,15 +148,3 @@ class Cleaner:
             if (index + 1) % 100 == 0:
                 self.__dump_proc_folders()
         self.__dump_proc_folders()
-
-    def start_clean_thread(
-        self,
-        folders: list[Path],
-        on_end: Callable[[], None] | None = None
-    ):
-        """Запускает start_clean в отдельном потоке. После вызывает on_end"""
-        def thread():
-            self.start_clean(folders)
-            if on_end:
-                on_end()
-        threading.Thread(target=thread).start()

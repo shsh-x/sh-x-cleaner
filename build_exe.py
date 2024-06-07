@@ -14,6 +14,8 @@ if __name__ == "__main__":
         "assets/white.png": ".",
         "assets/white.jpg": "."
     }
+    use_venv = False
+    venv_path = "venv"
 
     # Убеждаемся, что pyinstaller установлен
     try:
@@ -26,6 +28,9 @@ if __name__ == "__main__":
     command = ["pyinstaller", "--onefile", "--clean"]
     if noconsole:
         command.append("--noconsole")
+
+    if use_venv:
+        command.extend(["--paths", f"{venv_path}/Lib/site-packages"])
 
     command.extend(["--icon", str(Path(icon).resolve())])
     for asset, target in assets.items():
