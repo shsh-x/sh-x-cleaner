@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QMouseEvent, QIcon
+from PyQt6.QtGui import QIcon, QMouseEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
 
 
@@ -17,12 +17,13 @@ class TitleBar(QWidget):
         # Иконка
         self.icon = QLabel(self)
         icon = QIcon('assets/icon.ico')
-        self.icon.setPixmap(icon.pixmap(QSize(16, 16)))  # Set the size of the icon here
+        self.icon.setPixmap(
+            icon.pixmap(QSize(16, 16))  # Set the size of the icon here
+        )
         title_bar_layout.addWidget(self.icon)
 
-
         # Тайтл
-        
+
         self.title = QLabel(f"{self.__class__.__name__}", self)
         self.title.setStyleSheet(
             """
@@ -45,17 +46,16 @@ class TitleBar(QWidget):
         self.min_button = QToolButton(self)
         self.close_button = QToolButton(self)
         # Ставим иконки, если получен стиль
-        if style := self.style():
-            # Иконка для кномпочки сворачивания
-            min_icon = QIcon()
-            min_icon.addFile('assets/min.svg')
-            self.min_button.setIcon(min_icon)
 
+        # Иконка для кномпочки сворачивания
+        min_icon = QIcon()
+        min_icon.addFile('assets/min.svg')
+        self.min_button.setIcon(min_icon)
 
-            # Иконка для кномпочки закрытия
-            close_icon = QIcon()
-            close_icon.addFile('assets/close.svg')
-            self.close_button.setIcon(close_icon)
+        # Иконка для кномпочки закрытия
+        close_icon = QIcon()
+        close_icon.addFile('assets/close.svg')
+        self.close_button.setIcon(close_icon)
 
         # Коннектим клики, если есть окно
         if window := self.window():
