@@ -31,6 +31,11 @@ class _FolderCleaner:
             self.folder_path, self.params['delete_modes']
         )
 
+        # Если в папке нет osu файлов - удаляем
+        if not self.of_folder.osu_files:
+            shutil.rmtree(self.folder_path)
+            return
+
         self.__delete_trash()
         # Удаляем папку, если были удалены все .osu
         if not [f for f in os.listdir(self.folder_path) if f.endswith(".osu")]:
@@ -38,11 +43,6 @@ class _FolderCleaner:
             return
 
         self.__replace_images()
-
-        # Если в папке нет osu файлов - удаляем
-        if not self.of_folder.osu_files:
-            shutil.rmtree(self.folder_path)
-            return
 
     def __delete_trash(self):
         """Удаление мусора (ненужных файлов)"""
