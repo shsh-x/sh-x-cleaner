@@ -2,16 +2,16 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QEvent, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QApplication,  QFileDialog,    QHBoxLayout,
-                             QLabel,        QMainWindow,    QMessageBox,
-                             QProgressBar,  QPushButton,    QButtonGroup,
-                             QVBoxLayout,   QWidget)
+from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFileDialog,
+                             QHBoxLayout, QLabel, QMainWindow, QMessageBox,
+                             QProgressBar, QPushButton, QVBoxLayout, QWidget)
 
 from ..app.cleaner import Cleaner, CleanerParams
 from ..app.osu_parser import OSUGameModes
 from ..utils import get_resource_path
+from .title_bar import TitleBar
 
 
 class BackgroundModes(Enum):
@@ -21,9 +21,11 @@ class BackgroundModes(Enum):
     CUSTOM = "Custom"
     DELETE = "Delete"
 
+
 class CleanerWorkerThread(QThread):
     progress = pyqtSignal(int)
     finished = pyqtSignal()
+    error_occured = pyqtSignal(Exception)
 
     def __init__(
         self,
@@ -40,8 +42,13 @@ class CleanerWorkerThread(QThread):
         self.folders = folders
 
     def run(self):
-        self.cleaner.start_clean(self.folders)
-        self.finished.emit()
+        try:
+            self.cleaner.start_clean(self.folders)
+            self.finished.emit()
+        except Exception as e:
+            self.error_occured.emit(e)
+
+
 
 class SHXCleanerApp(QMainWindow):
     def __init__(self):
@@ -50,19 +57,31 @@ class SHXCleanerApp(QMainWindow):
         self.setWindowTitle("sh(x)cleaner")
         icon = QIcon(get_resource_path("assets/icon.ico"))
         self.setWindowIcon(icon)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
         self.init_components()
         self.center_window(320, 250)
 
     def init_components(self):
         """Инициализирует компоненты GUI"""
+        # Виджет всего окна
         self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
+        centra_widget_layout = QVBoxLayout()
+        centra_widget_layout.setContentsMargins(0, 0, 0, 0)
+        centra_widget_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.central_widget.setLayout(centra_widget_layout)
         self.central_widget.setStyleSheet("background-color: ;")
+        self.setCentralWidget(self.central_widget)
 
-        self.main_layout = QVBoxLayout(self.central_widget)
+        # Добавляем тайтл (ОН В ОТДЕЛЬНОМ КЛАССЕ)
+        self.title_bar = TitleBar(self)
+        centra_widget_layout.addWidget(self.title_bar)
+
+        # Основной лэйаут приложения
+        self.main_layout = QVBoxLayout()
         self.main_layout.setSpacing(20)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
+        centra_widget_layout.addLayout(self.main_layout)
 
         # Фреймы
         self.top_frame = QHBoxLayout()
@@ -76,7 +95,10 @@ class SHXCleanerApp(QMainWindow):
 
         # Delete modes
         self.delete_modes_label = QLabel("Delete modes")
-        self.delete_modes_label.setStyleSheet("font-size: 14px; margin-bottom: 5px;")
+        self.delete_modes_label.setStyleSheet(
+            "font-size: 14px; "
+            "margin-bottom: 5px;"
+        )
         self.left_frame.addWidget(self.delete_modes_label)
 
         self.delete_modes_group = QButtonGroup()
@@ -110,7 +132,8 @@ class SHXCleanerApp(QMainWindow):
 
         # Backgrounds
         self.backgrounds_label = QLabel("Backgrounds")
-        self.backgrounds_label.setStyleSheet("font-size: 14px; margin-bottom: 5px;")
+        self.backgrounds_label.setStyleSheet(
+            "font-size: 14px; margin-bottom: 5px;")
         self.right_frame.addWidget(self.backgrounds_label)
 
         self.backgrounds_group = QButtonGroup()
@@ -186,6 +209,8 @@ class SHXCleanerApp(QMainWindow):
         x = (screen_geometry.width() - width) // 2
         y = (screen_geometry.height() - height) // 2
         self.setGeometry(x, y, width, height)
+
+
 
     def pick_params(self) -> CleanerParams:
         """Собирает параметры очистки из GUI"""
@@ -264,9 +289,10 @@ class SHXCleanerApp(QMainWindow):
         )
         self.worker_thread.progress.connect(self.__update_progress)
         self.worker_thread.finished.connect(self.__on_cleaning_finished)
+        self.worker_thread.error_occured.connect(self.__on_cleaning_error)
         self.worker_thread.start()
 
-    def __update_progress(self, folder_id):
+    def __update_progress(self, folder_id: int):
         self.progress.setValue(self.progress.value() + 1)
 
     def __on_cleaning_finished(self):
@@ -274,5 +300,13 @@ class SHXCleanerApp(QMainWindow):
             self,
             "Info",
             "Everything's clean. Check the size of your songs folder lol"
+        )
+        self.close()
+
+    def __on_cleaning_error(self, exception: Exception):
+        QMessageBox.critical(
+            self,
+            "An error occured",
+            f"An error occurred (for more info look terminal):\n{exception}"
         )
         self.close()

@@ -51,7 +51,7 @@ class OSUParser:
         """Парсинг osu-файла."""
         audio_filename: str = ""
         image_filenames: set[str] = set()
-        mode: OSUGameModes
+        mode: OSUGameModes = OSUGameModes.OSU
 
         with open(file_path, 'r', encoding='UTF-8') as file:
             for line in file:
