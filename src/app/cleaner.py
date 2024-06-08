@@ -30,7 +30,7 @@ class _FolderCleaner:
         self.of_folder = OSUParser.parse_folder(
             self.folder_path, self.params['delete_modes']
         )
-        
+
         self.__delete_trash()
         # Удаляем папку, если были удалены все .osu
         if not [f for f in os.listdir(self.folder_path) if f.endswith(".osu")]:
@@ -43,7 +43,7 @@ class _FolderCleaner:
         if not self.of_folder.osu_files:
             shutil.rmtree(self.folder_path)
             return
-        
+
     def __delete_trash(self):
         """Удаление мусора (ненужных файлов)"""
         for file in os.listdir(self.folder_path):
@@ -133,25 +133,30 @@ class Cleaner:
     def start_clean(self, folders: list[Path]):
         """Запускает очистку карт OSU"""
         for index, folder in enumerate(folders):
-            folder_path = Path(self.songs_folder, folder)
+            try:
+                folder_path = Path(self.songs_folder, folder)
 
-            folder_name = folder_path.name
-            # Пропускаем, если папка не содержит ID карты
-            if not (folder_id_match := re.match(r'^(\d+)', folder_name)):
-                continue
-            folder_id = int(folder_id_match.group(1))
-            # Пропускаем, если эта карта уже обработана
-            if folder_id in self.processed_folders:
-                continue
+                folder_name = folder_path.name
+                # Пропускаем, если папка не содержит ID карты
+                if not (folder_id_match := re.match(r'^(\d+)', folder_name)):
+                    continue
+                folder_id = int(folder_id_match.group(1))
+                # Пропускаем, если эта карта уже обработана
+                if folder_id in self.processed_folders:
+                    continue
 
-            # Запускаем очистку папки карты
-            _FolderCleaner(folder_path, self.params).clean()
-            if folder_path.exists():
-                self.processed_folders.append(folder_id)
-            # Выполняем коллбек на увеличение прогресса выполнения
-            self.progress_step(folder_id)
+                # Запускаем очистку папки карты
+                _FolderCleaner(folder_path, self.params).clean()
+                if folder_path.exists():
+                    self.processed_folders.append(folder_id)
+                # Выполняем коллбек на увеличение прогресса выполнения
+                self.progress_step(folder_id)
 
-            # Выполняем дамп обработанных карт каждые 100 итераций
-            if (index + 1) % 100 == 0:
-                self.__dump_proc_folders()
+                # Выполняем дамп обработанных карт каждые 100 итераций
+                if (index + 1) % 100 == 0:
+                    self.__dump_proc_folders()
+            except Exception as e:
+                ex = type(e)(f"Folder: \"{folder}\"\n{e}")
+                raise ex.with_traceback(e.__traceback__)
+
         self.__dump_proc_folders()

@@ -2,15 +2,16 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from PyQt6.QtCore import QEvent, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFileDialog,
                              QHBoxLayout, QLabel, QMainWindow, QMessageBox,
                              QProgressBar, QPushButton, QVBoxLayout, QWidget)
 
-from ..app.cleaner import Cleaner, CleanerParams
+from ..app.cleaner import CleanerParams
 from ..app.osu_parser import OSUGameModes
 from ..utils import get_resource_path
+from .cleaner_qworker import CleanerWorkerThread
 from .title_bar import TitleBar
 
 
@@ -20,34 +21,6 @@ class BackgroundModes(Enum):
     WHITE = "White"
     CUSTOM = "Custom"
     DELETE = "Delete"
-
-
-class CleanerWorkerThread(QThread):
-    progress = pyqtSignal(int)
-    finished = pyqtSignal()
-    error_occured = pyqtSignal(Exception)
-
-    def __init__(
-        self,
-        songs_folder: Path,
-        params: CleanerParams,
-        folders: list[Path]
-    ):
-        super().__init__()
-        self.cleaner = Cleaner(
-            songs_folder,
-            params,
-            lambda folder_id: self.progress.emit(folder_id)
-        )
-        self.folders = folders
-
-    def run(self):
-        try:
-            self.cleaner.start_clean(self.folders)
-            self.finished.emit()
-        except Exception as e:
-            self.error_occured.emit(e)
-
 
 
 class SHXCleanerApp(QMainWindow):
@@ -209,8 +182,6 @@ class SHXCleanerApp(QMainWindow):
         x = (screen_geometry.width() - width) // 2
         y = (screen_geometry.height() - height) // 2
         self.setGeometry(x, y, width, height)
-
-
 
     def pick_params(self) -> CleanerParams:
         """Собирает параметры очистки из GUI"""
