@@ -25,19 +25,25 @@ class _FolderCleaner:
         self.params = params
 
     def clean(self):
-        """Очистка папки с OSU файлами."""
+        """Очистка папки с OSU файлами"""
 
         self.of_folder = OSUParser.parse_folder(
             self.folder_path, self.params['delete_modes']
         )
-        # Если в папке нет osu файлов - удаляем папку
-        if not self.of_folder.osu_files:
+        
+        self.__delete_trash()
+        # Удаляем папку, если были удалены все .osu
+        if not [f for f in os.listdir(self.folder_path) if f.endswith(".osu")]:
             shutil.rmtree(self.folder_path)
             return
 
-        self.__delete_trash()
         self.__replace_images()
 
+        # Если в папке нет osu файлов - удаляем
+        if not self.of_folder.osu_files:
+            shutil.rmtree(self.folder_path)
+            return
+        
     def __delete_trash(self):
         """Удаление мусора (ненужных файлов)"""
         for file in os.listdir(self.folder_path):
@@ -140,7 +146,8 @@ class Cleaner:
 
             # Запускаем очистку папки карты
             _FolderCleaner(folder_path, self.params).clean()
-            self.processed_folders.append(folder_id)
+            if folder_path.exists():
+                self.processed_folders.append(folder_id)
             # Выполняем коллбек на увеличение прогресса выполнения
             self.progress_step(folder_id)
 

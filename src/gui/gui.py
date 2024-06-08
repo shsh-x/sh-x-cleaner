@@ -4,10 +4,10 @@ from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
-                             QHBoxLayout, QLabel, QMainWindow, QMessageBox,
-                             QProgressBar, QPushButton, QSizePolicy,
-                             QSpacerItem, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QApplication,  QFileDialog,    QHBoxLayout,
+                             QLabel,        QMainWindow,    QMessageBox,
+                             QProgressBar,  QPushButton,    QButtonGroup,
+                             QVBoxLayout,   QWidget)
 
 from ..app.cleaner import Cleaner, CleanerParams
 from ..app.osu_parser import OSUGameModes
@@ -18,9 +18,8 @@ class BackgroundModes(Enum):
     """Enum описывающий настройки работы с фонами"""
     KEEP = "Keep"
     WHITE = "White"
-    DELETE = "Delete"
     CUSTOM = "Custom"
-
+    DELETE = "Delete"
 
 class CleanerWorkerThread(QThread):
     progress = pyqtSignal(int)
@@ -44,7 +43,6 @@ class CleanerWorkerThread(QThread):
         self.cleaner.start_clean(self.folders)
         self.finished.emit()
 
-
 class SHXCleanerApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -60,6 +58,7 @@ class SHXCleanerApp(QMainWindow):
         """Инициализирует компоненты GUI"""
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
+        self.central_widget.setStyleSheet("background-color: ;")
 
         self.main_layout = QVBoxLayout(self.central_widget)
         self.main_layout.setSpacing(20)
@@ -75,64 +74,75 @@ class SHXCleanerApp(QMainWindow):
         self.right_frame = QVBoxLayout()
         self.top_frame.addLayout(self.right_frame)
 
-        # Режимы игры
-        self.osu_var = QCheckBox("Osu!")
-        self.taiko_var = QCheckBox("Taiko")
-        self.catch_var = QCheckBox("Catch")
-        self.mania_var = QCheckBox("Mania")
+        # Delete modes
+        self.delete_modes_label = QLabel("Delete modes")
+        self.delete_modes_label.setStyleSheet("font-size: 14px; margin-bottom: 5px;")
+        self.left_frame.addWidget(self.delete_modes_label)
 
-        for checkbox in [
+        self.delete_modes_group = QButtonGroup()
+        self.delete_modes_group.setExclusive(False)
+        self.osu_var = QPushButton("Osu!")
+        self.taiko_var = QPushButton("Taiko")
+        self.catch_var = QPushButton("Catch")
+        self.mania_var = QPushButton("Mania")
+
+        for button in [
             self.osu_var,
             self.taiko_var,
             self.catch_var,
             self.mania_var
         ]:
-            checkbox.setStyleSheet("""
-                QCheckBox {
+            button.setCheckable(True)
+            button.setStyleSheet("""
+                QPushButton {
                     font-size: 14px;
-                    margin-bottom: 5px;
+                    padding: 5px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background-color: #fff;
                 }
-                QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
+                QPushButton:checked {
+                    background-color: #ccc;
                 }
             """)
-            self.left_frame.addWidget(checkbox)
+            self.delete_modes_group.addButton(button)
+            self.left_frame.addWidget(button)
 
-        # Параметры работы с фонами
-        self.bgs_var = QComboBox()
-        self.bgs_var.addItems([mode.value for mode in BackgroundModes])
-        self.bgs_var.setStyleSheet("""
-            QComboBox {
-                font-size: 14px;
-                padding: 5px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-            }
-        """)
-        self.bgs_label = QLabel("BGs:")
-        self.bgs_label.setStyleSheet("""
-            QLabel {
-                font-size: 14px;
-                margin-bottom: 5px;
-            }
-        """)
-        self.right_frame.addWidget(self.bgs_label)
-        self.right_frame.addWidget(self.bgs_var)
-        self.right_frame.addSpacerItem(QSpacerItem(
-            20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-        ))
+        # Backgrounds
+        self.backgrounds_label = QLabel("Backgrounds")
+        self.backgrounds_label.setStyleSheet("font-size: 14px; margin-bottom: 5px;")
+        self.right_frame.addWidget(self.backgrounds_label)
+
+        self.backgrounds_group = QButtonGroup()
+        self.backgrounds_group.setExclusive(True)
+        self.keep_var = QPushButton("Keep")
+        self.white_var = QPushButton("White")
+        self.custom_var = QPushButton("Custom")
+        self.delete_var = QPushButton("Delete")
+
+        for button in [
+            self.keep_var,
+            self.white_var,
+            self.custom_var,
+            self.delete_var
+        ]:
+            button.setCheckable(True)
+            button.setStyleSheet("""
+                QPushButton {
+                    font-size: 14px;
+                    padding: 5px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background-color: #fff;
+                }
+                QPushButton:checked {
+                    background-color: #ccc;
+                }
+            """)
+            self.backgrounds_group.addButton(button)
+            self.right_frame.addWidget(button)
 
         # Прогресс бар
-        self.progress_label = QLabel("Progress:")
-        self.progress_label.setStyleSheet("""
-            QLabel {
-                font-size: 14px;
-                margin-top: 10px;
-            }
-        """)
-        self.main_layout.addWidget(self.progress_label)
-
         self.progress = QProgressBar()
         self.progress.setStyleSheet("""
             QProgressBar {
@@ -184,20 +194,19 @@ class SHXCleanerApp(QMainWindow):
         delete_modes: list[OSUGameModes] = []
 
         # Параметры работы с фоном
-        bgs_option = BackgroundModes(self.bgs_var.currentText())
-        if bgs_option == BackgroundModes.KEEP:
+        if self.keep_var.isChecked():
             user_images = None
             delete_images = False
-        elif bgs_option == BackgroundModes.WHITE:
+        elif self.white_var.isChecked():
             user_images = {
                 ".png": get_resource_path("assets/white.png"),
                 ".jpg": get_resource_path("assets/white.jpg")
             }
             delete_images = False
-        elif bgs_option == BackgroundModes.DELETE:
+        elif self.delete_var.isChecked():
             user_images = None
             delete_images = True
-        elif bgs_option == BackgroundModes.CUSTOM:
+        elif self.custom_var.isChecked():
             user_images = {}
             delete_images = False
 
@@ -259,7 +268,6 @@ class SHXCleanerApp(QMainWindow):
 
     def __update_progress(self, folder_id):
         self.progress.setValue(self.progress.value() + 1)
-        self.progress_label.setText(f"Cleaning {folder_id}...")
 
     def __on_cleaning_finished(self):
         QMessageBox.information(
