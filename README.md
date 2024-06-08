@@ -8,7 +8,7 @@ Optionally, you can choose a custom bg to replace in every song.
 
 - Python 3.12
 
-## Getting Started
+## How to use
 
 To start doing funny things you can either:
 
@@ -53,7 +53,7 @@ If you prefer to build the executable yourself:
    python build_exe.py
    ```
 
-6. Run the generated `.exe` file (located in the `dist` directory).
+6. Run built `.exe` file (located in the `dist` directory).
 
 ### Run the Script Directly (are you scared of .exe?)
 
