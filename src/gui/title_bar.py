@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
 class TitleBar(QWidget):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
-
+        self.setFixedHeight(30)
         self.setAutoFillBackground(True)
         self.initial_pos = None
 
@@ -14,24 +14,17 @@ class TitleBar(QWidget):
         title_bar_layout.setContentsMargins(0, 0, 0, 0)
         title_bar_layout.setSpacing(0)
 
-        # Иконка
-        self.icon = QLabel(self)
-        icon = QIcon('assets/icon.ico')
-        self.icon.setPixmap(
-            icon.pixmap(QSize(16, 16))  # Set the size of the icon here
-        )
-        title_bar_layout.addWidget(self.icon)
-
         # Тайтл
 
         self.title = QLabel(f"{self.__class__.__name__}", self)
         self.title.setStyleSheet(
             """
-                text-transform: uppercase;
-                font-size: 8pt;
+                font-size: 14pt;
                 font-weight: bold;
                 border: none;
-                margin-right: 20px;
+                margin-left: 60px;
+                padding-bottom: 2px;
+                color: #4B5D92;
             """
         )
 

@@ -12,7 +12,10 @@ if __name__ == "__main__":
     icon = "assets/icon.ico"
     assets = {
         "assets/white.png": "./assets/",
-        "assets/white.jpg": "./assets/"
+        "assets/white.jpg": "./assets/",
+        "assets/min.svg": "./assets/",
+        "assets/close.svg": "./assets/",
+        "assets/Exo2.ttf": "./assets/",
     }
     use_venv = False
     venv_path = "venv"

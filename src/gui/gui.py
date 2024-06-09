@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QFontDatabase, QIcon
 from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFileDialog,
                              QHBoxLayout, QLabel, QMainWindow, QMessageBox,
                              QProgressBar, QPushButton, QVBoxLayout, QWidget)
@@ -14,6 +14,7 @@ from ..utils import get_resource_path
 from .cleaner_qworker import CleanerWorkerThread
 from .title_bar import TitleBar
 
+font_path = get_resource_path("assets/Exo2.ttf")
 
 class BackgroundModes(Enum):
     """Enum описывающий настройки работы с фонами"""
@@ -26,14 +27,18 @@ class BackgroundModes(Enum):
 class SHXCleanerApp(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        
         self.setWindowTitle("sh(x)cleaner")
         icon = QIcon(get_resource_path("assets/icon.ico"))
         self.setWindowIcon(icon)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
+        font_id = QFontDatabase.addApplicationFont(font_path)
+        font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+
         self.init_components()
         self.center_window(320, 250)
+        self.setStyleSheet(f"QWidget {{ font-family: {font_family};}}")
 
     def init_components(self):
         """Инициализирует компоненты GUI"""
@@ -43,7 +48,7 @@ class SHXCleanerApp(QMainWindow):
         centra_widget_layout.setContentsMargins(0, 0, 0, 0)
         centra_widget_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.central_widget.setLayout(centra_widget_layout)
-        self.central_widget.setStyleSheet("background-color: ;")
+        self.central_widget.setStyleSheet("")
         self.setCentralWidget(self.central_widget)
 
         # Добавляем тайтл (ОН В ОТДЕЛЬНОМ КЛАССЕ)
@@ -69,9 +74,9 @@ class SHXCleanerApp(QMainWindow):
         # Delete modes
         self.delete_modes_label = QLabel("Delete modes")
         self.delete_modes_label.setStyleSheet(
-            "font-size: 14px; "
-            "margin-bottom: 5px;"
+            "font-size: 15px; margin-bottom: 4px;"
         )
+        self.delete_modes_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.left_frame.addWidget(self.delete_modes_label)
 
         self.delete_modes_group = QButtonGroup()
@@ -90,14 +95,20 @@ class SHXCleanerApp(QMainWindow):
             button.setCheckable(True)
             button.setStyleSheet("""
                 QPushButton {
-                    font-size: 14px;
-                    padding: 5px;
-                    border: 1px solid #ccc;
+                    font-size: 18px;
+                    padding-top: 4px;
+                    padding-bottom: 6px;
                     border-radius: 4px;
-                    background-color: #fff;
+                    background-color: #EDEDF4;
                 }
+                QPushButton:hover {background-color: #E9E9F1}
                 QPushButton:checked {
-                    background-color: #ccc;
+                    background-color: #D6E3FF;
+                    color: #001B3E;
+                }
+                QPushButton:checked::hover {
+                    background-color: #D2DFFB;
+                    color: #001B3E;
                 }
             """)
             self.delete_modes_group.addButton(button)
@@ -106,7 +117,8 @@ class SHXCleanerApp(QMainWindow):
         # Backgrounds
         self.backgrounds_label = QLabel("Backgrounds")
         self.backgrounds_label.setStyleSheet(
-            "font-size: 14px; margin-bottom: 5px;")
+            "font-size: 15px; margin-bottom: 4px;")
+        self.backgrounds_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.right_frame.addWidget(self.backgrounds_label)
 
         self.backgrounds_group = QButtonGroup()
@@ -125,14 +137,20 @@ class SHXCleanerApp(QMainWindow):
             button.setCheckable(True)
             button.setStyleSheet("""
                 QPushButton {
-                    font-size: 14px;
-                    padding: 5px;
-                    border: 1px solid #ccc;
+                    font-size: 18px;
+                    padding-top: 4px;
+                    padding-bottom: 6px;
                     border-radius: 4px;
-                    background-color: #fff;
+                    background-color: #EDEDF4;
                 }
+                QPushButton:hover {background-color: #E9E9F1}
                 QPushButton:checked {
-                    background-color: #ccc;
+                    background-color: #D6E3FF;
+                    color: #001B3E;
+                }
+                QPushButton:checked::hover {
+                    background-color: #D2DFFB;
+                    color: #001B3E;
                 }
             """)
             self.backgrounds_group.addButton(button)
@@ -143,31 +161,30 @@ class SHXCleanerApp(QMainWindow):
         self.progress.setStyleSheet("""
             QProgressBar {
                 height: 30px;
-                border: 2px solid #3d3d3d;
-                border-radius: 10px;
-                font-size: 14px;
+                border-radius: 4px;
+                font-size: 17px;
                 text-align: center;
+                font-weight: 500;
             }
             QProgressBar::chunk {
-                background-color: #4CAF50;
-                border-radius: 8px;
+                border-radius: 4px;
+                background-color: #BED1FA;
             }
         """)
         self.main_layout.addWidget(self.progress)
-
         # D e s t r o y   e v e r y t h i n g
         self.start_button = QPushButton("Destroy everything")
         self.start_button.setStyleSheet("""
             QPushButton {
                 font-size: 16px;
                 padding: 10px 20px;
-                background-color: #f44336;
-                color: white;
                 border: none;
                 border-radius: 4px;
+                background-color: #D6E3FF;
+                color: #001B3E;
             }
             QPushButton:hover {
-                background-color: #d32f2f;
+                background-color: #D2DFFB;
             }
         """)
         self.start_button.clicked.connect(self.start_cleaning)
@@ -265,11 +282,12 @@ class SHXCleanerApp(QMainWindow):
 
     def __update_progress(self, folder_id: int):
         self.progress.setValue(self.progress.value() + 1)
+        self.progress.setFormat(str(folder_id))
 
     def __on_cleaning_finished(self):
         QMessageBox.information(
             self,
-            "Info",
+            "Done!",
             "Everything's clean. Check the size of your songs folder lol"
         )
         self.close()

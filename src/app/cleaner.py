@@ -141,6 +141,10 @@ class Cleaner:
                 if not (folder_id_match := re.match(r'^(\d+)', folder_name)):
                     continue
                 folder_id = int(folder_id_match.group(1))
+
+                # Выполняем коллбек на увеличение прогресса выполнения
+                self.progress_step(folder_id)
+
                 # Пропускаем, если эта карта уже обработана
                 if folder_id in self.processed_folders:
                     continue
@@ -149,8 +153,6 @@ class Cleaner:
                 _FolderCleaner(folder_path, self.params).clean()
                 if folder_path.exists():
                     self.processed_folders.append(folder_id)
-                # Выполняем коллбек на увеличение прогресса выполнения
-                self.progress_step(folder_id)
 
                 # Выполняем дамп обработанных карт каждые 100 итераций
                 if (index + 1) % 100 == 0:
