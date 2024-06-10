@@ -16,6 +16,7 @@ if __name__ == "__main__":
         "assets/min.svg": "./assets/",
         "assets/close.svg": "./assets/",
         "assets/Exo2.ttf": "./assets/",
+        "assets/icon.ico": "./assets/"
     }
     use_venv = False
     venv_path = "venv"

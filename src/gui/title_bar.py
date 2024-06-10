@@ -1,7 +1,7 @@
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QMouseEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
-
+from ..utils import get_resource_path
 
 class TitleBar(QWidget):
     def __init__(self, parent: QWidget):
@@ -42,12 +42,12 @@ class TitleBar(QWidget):
 
         # Иконка для кномпочки сворачивания
         min_icon = QIcon()
-        min_icon.addFile('assets/min.svg')
+        min_icon.addFile(get_resource_path('assets/min.svg'))
         self.min_button.setIcon(min_icon)
 
         # Иконка для кномпочки закрытия
         close_icon = QIcon()
-        close_icon.addFile('assets/close.svg')
+        close_icon.addFile(get_resource_path('assets/close.svg'))
         self.close_button.setIcon(close_icon)
 
         # Коннектим клики, если есть окно
