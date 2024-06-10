@@ -16,6 +16,7 @@ from .title_bar import TitleBar
 
 font_path = get_resource_path("assets/Exo2.ttf")
 
+
 class BackgroundModes(Enum):
     """Enum описывающий настройки работы с фонами"""
     KEEP = "Keep"
@@ -27,7 +28,7 @@ class BackgroundModes(Enum):
 class SHXCleanerApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         self.setWindowTitle("sh(x)cleaner")
         icon = QIcon(get_resource_path("assets/icon.ico"))
         self.setWindowIcon(icon)
@@ -282,7 +283,9 @@ class SHXCleanerApp(QMainWindow):
 
     def __update_progress(self, folder_id: int):
         self.progress.setValue(self.progress.value() + 1)
-        self.progress.setFormat(str(folder_id))
+        # Не устанавливаем id карты в прогресс, если id == -1
+        if folder_id != -1:
+            self.progress.setFormat(str(folder_id))
 
     def __on_cleaning_finished(self):
         QMessageBox.information(
@@ -292,10 +295,10 @@ class SHXCleanerApp(QMainWindow):
         )
         self.close()
 
-    def __on_cleaning_error(self, exception: Exception):
+    def __on_cleaning_error(self, msg: str):
         QMessageBox.critical(
             self,
             "An error occured",
-            f"An error occurred (for more info look terminal):\n{exception}"
+            f"An error occurred (for more info look terminal):\n{msg}"
         )
         self.close()

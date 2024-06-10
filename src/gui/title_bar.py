@@ -1,7 +1,9 @@
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QIcon, QMouseEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
+
 from ..utils import get_resource_path
+
 
 class TitleBar(QWidget):
     def __init__(self, parent: QWidget):

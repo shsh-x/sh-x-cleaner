@@ -1,14 +1,16 @@
+import traceback
 from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from ..app.cleaner import Cleaner, CleanerParams
+from ..exceptions import CleanError, OSUParsingError
 
 
 class CleanerWorkerThread(QThread):
     progress = pyqtSignal(int)
     finished = pyqtSignal()
-    error_occured = pyqtSignal(Exception)
+    error_occured = pyqtSignal(str)
 
     def __init__(
         self,
@@ -28,5 +30,13 @@ class CleanerWorkerThread(QThread):
         try:
             self.cleaner.start_clean(self.folders)
             self.finished.emit()
+        except (CleanError, OSUParsingError) as e:
+            base_ex = e.base_exception
+            print(e)
+            traceback.print_exception(
+                type(base_ex), base_ex, base_ex.__traceback__
+            )
+            self.error_occured.emit(str(e))
         except Exception as e:
-            self.error_occured.emit(e)
+            traceback.print_exception(type(e), e, e.__traceback__)
+            self.error_occured.emit(str(e))

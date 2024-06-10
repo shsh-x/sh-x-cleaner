@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Callable, TypedDict
 
+from ..exceptions import CleanError, OSUParsingError
 from .osu_parser import OSUFilesFolder, OSUGameModes, OSUParser
 
 
@@ -47,27 +48,30 @@ class _FolderCleaner:
     def __delete_trash(self):
         """Удаление мусора (ненужных файлов)"""
         for file in os.listdir(self.folder_path):
-            file_path = Path(self.folder_path, file)
+            try:
+                file_path = Path(self.folder_path, file)
 
-            # Пропускаем, если файл в известных osu файлах
-            if file_path.name in self.of_folder.osu_filenames:
-                continue
-            # Пропускаем, если файл в известных аудио файлах
-            if file_path.name in self.of_folder.audio_filenames:
-                continue
-            # Пропускаем, если файл в известных изображениях файлах
-            # И не стоит параметра на удаление изображений
-            if (
-                not self.params['delete_images']
-                and file_path.name in self.of_folder.image_filenames
-            ):
-                continue
+                # Пропускаем, если файл в известных osu файлах
+                if file_path.name in self.of_folder.osu_filenames:
+                    continue
+                # Пропускаем, если файл в известных аудио файлах
+                if file_path.name in self.of_folder.audio_filenames:
+                    continue
+                # Пропускаем, если файл в известных изображениях файлах
+                # И не стоит параметра на удаление изображений
+                if (
+                    not self.params['delete_images']
+                    and file_path.name in self.of_folder.image_filenames
+                ):
+                    continue
 
-            # Удаляем
-            if os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-            else:
-                os.remove(file_path)
+                # Удаляем
+                if os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+                else:
+                    os.remove(file_path)
+            except Exception as e:
+                raise CleanError(e, self.folder_path, file)
 
     def __replace_images(self):
         """Замена изображений на пользовательские"""
@@ -77,19 +81,22 @@ class _FolderCleaner:
             return
 
         for img_file in self.of_folder.image_filenames:
-            img_file_path = Path(self.folder_path, img_file)
+            try:
+                img_file_path = Path(self.folder_path, img_file)
 
-            # Пропускаем если нет такого расширения в пользовательских img
-            img_type = img_file_path.suffix
-            if img_type not in user_imgs:
-                continue
+                # Пропускаем если нет такого расширения в пользовательских img
+                img_type = img_file_path.suffix
+                if img_type not in user_imgs:
+                    continue
 
-            img_file_dir = img_file_path.parent
-            # Если по какой-то причине папки изображения нет, то создаём
-            if not img_file_dir.exists():
-                os.makedirs(img_file_dir)
-            # Копируем пользовательское изображение, заменяя текущее
-            shutil.copy(user_imgs[img_type], img_file_path)
+                img_file_dir = img_file_path.parent
+                # Если по какой-то причине папки изображения нет, то создаём
+                if not img_file_dir.exists():
+                    os.makedirs(img_file_dir)
+                # Копируем пользовательское изображение, заменяя текущее
+                shutil.copy(user_imgs[img_type], img_file_path)
+            except Exception as e:
+                raise CleanError(e, self.folder_path, img_file)
 
 
 class Cleaner:
@@ -134,14 +141,15 @@ class Cleaner:
         """Запускает очистку карт OSU"""
         for index, folder in enumerate(folders):
             try:
-                folder_path = Path(self.songs_folder, folder)
-
-                folder_name = folder_path.name
+                folder_name = folder.name
                 # Пропускаем, если папка не содержит ID карты
                 if not (folder_id_match := re.match(r'^(\d+)', folder_name)):
+                    # Выполняем коллбек на увеличение прогресса выполнения
+                    # Передаём -1 в качестве id карты
+                    self.progress_step(-1)
                     continue
-                folder_id = int(folder_id_match.group(1))
 
+                folder_id = int(folder_id_match.group(1))
                 # Выполняем коллбек на увеличение прогресса выполнения
                 self.progress_step(folder_id)
 
@@ -150,15 +158,16 @@ class Cleaner:
                     continue
 
                 # Запускаем очистку папки карты
-                _FolderCleaner(folder_path, self.params).clean()
-                if folder_path.exists():
+                _FolderCleaner(folder, self.params).clean()
+                if folder.exists():
                     self.processed_folders.append(folder_id)
 
                 # Выполняем дамп обработанных карт каждые 100 итераций
                 if (index + 1) % 100 == 0:
                     self.__dump_proc_folders()
+            except (CleanError, OSUParsingError) as e:
+                raise e
             except Exception as e:
-                ex = type(e)(f"Folder: \"{folder}\"\n{e}")
-                raise ex.with_traceback(e.__traceback__)
+                raise CleanError(e, folder)
 
         self.__dump_proc_folders()
