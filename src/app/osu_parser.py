@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from ..exceptions import OSUParsingError
+
 # \d+,\d+ на всякий случай, мало ли встретится не 0,0
 _IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+\.(?:jpg|png))\"')
 """Регулярное выражения для строки с изображением"""
@@ -46,27 +48,41 @@ class OSUFilesFolder:
 
 
 class OSUParser:
+    possible_encodings = [
+        "UTF-8",
+        "iso-8859-5",  # Windows-1251
+        "iso-8859-1",  # Windows-1252
+    ]
+
     @staticmethod
-    def parse_file(file_path: Path) -> OSUFile:
+    def parse_file(file_path: Path, encoding_num: int = 0) -> OSUFile:
         """Парсинг osu-файла."""
         audio_filename: str = ""
         image_filenames: set[str] = set()
         mode: OSUGameModes = OSUGameModes.OSU
 
-        with open(file_path, 'r', encoding='UTF-8') as file:
-            for line in file:
-                # Пропускаем комментарии
-                if line.strip().startswith("//"):
-                    continue
+        try:
+            encoding = OSUParser.possible_encodings[encoding_num]
+            with open(file_path, 'r', encoding=encoding) as file:
+                for line in file:
+                    # Пропускаем комментарии
+                    if line.strip().startswith("//"):
+                        continue
 
-                if line.startswith("AudioFilename: "):
-                    # Нашли строчку с AudioFilename
-                    audio_filename = line.split(": ")[1].strip()
-                elif match := re.match(_IMG_LINE_REGEX, line):
-                    # Нашли строчку с изображением
-                    image_filenames.add(match.group(1))
-                elif line.startswith("Mode: "):
-                    mode = OSUGameModes(int(line.split(": ")[1].strip()))
+                    if line.startswith("AudioFilename: "):
+                        # Нашли строчку с AudioFilename
+                        audio_filename = line.split(": ")[1].strip()
+                    elif match := re.match(_IMG_LINE_REGEX, line):
+                        # Нашли строчку с изображением
+                        image_filenames.add(match.group(1))
+                    elif line.startswith("Mode: "):
+                        mode = OSUGameModes(int(line.split(": ")[1].strip()))
+        except UnicodeDecodeError as e:
+            if encoding_num >= len(OSUParser.possible_encodings) - 1:
+                raise e
+            return OSUParser.parse_file(file_path, encoding_num + 1)
+        except Exception as e:
+            raise OSUParsingError(e, file_path)
 
         return OSUFile(file_path.name, audio_filename, image_filenames, mode)
 
