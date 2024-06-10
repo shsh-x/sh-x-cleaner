@@ -139,11 +139,13 @@ class Cleaner:
 
     def start_clean(self, folders: list[Path]):
         """Запускает очистку карт OSU"""
+        folders_ids = self._map_folders_ids(folders)
+
         for index, folder in enumerate(folders):
             try:
-                folder_id = self._get_folder_id(folder)
+                folder_id = folders_ids.get(folder)
                 # Пропускаем папку, если не удалось получить id карты
-                if folder_id == -1:
+                if folder_id is None:
                     # Выполняем коллбек на увеличение прогресса выполнения
                     # Передаём -1 в качестве id карты
                     self.progress_step(-1)
@@ -155,8 +157,9 @@ class Cleaner:
                 # Если этот id карты уже обработан
                 if folder_id in self.processed_folders:
                     # Если этот id - дубликат, то удаляем папку
-                    if self._is_id_duplicate(folders, folder_id):
+                    if self._is_id_duplicate(folders_ids, folder_id):
                         shutil.rmtree(folder)
+                        del folders_ids[folder]
                     # Пропускаем папку
                     continue
 
@@ -175,6 +178,12 @@ class Cleaner:
 
         self.__dump_proc_folders()
 
+    def _map_folders_ids(self, folders: list[Path]) -> dict[Path, int]:
+        result: dict[Path, int] = {}
+        for folder in folders:
+            result[folder] = self._get_folder_id(folder)
+        return result
+
     def _get_folder_id(self, folder: Path) -> int:
         """Получает ID карты из её названия"""
         folder_id_match = re.match(r'^(\d+)', folder.name)
@@ -182,9 +191,8 @@ class Cleaner:
             return -1
         return int(folder_id_match.group(1))
 
-    def _is_id_duplicate(self, folders: list[Path], folder_id: int) -> bool:
-        folders_with_id = [
-            f for f in folders
-            if self._get_folder_id(f) == folder_id
-        ]
-        return len(folders_with_id) > 1
+    def _is_id_duplicate(
+        self, folders_ids: dict[Path, int], folder_id: int
+    ) -> bool:
+        id_count = sum(1 for id in folders_ids.values() if id == folder_id)
+        return id_count > 1
