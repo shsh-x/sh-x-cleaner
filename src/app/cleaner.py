@@ -141,20 +141,23 @@ class Cleaner:
         """Запускает очистку карт OSU"""
         for index, folder in enumerate(folders):
             try:
-                folder_name = folder.name
-                # Пропускаем, если папка не содержит ID карты
-                if not (folder_id_match := re.match(r'^(\d+)', folder_name)):
+                folder_id = self._get_folder_id(folder)
+                # Пропускаем папку, если не удалось получить id карты
+                if folder_id == -1:
                     # Выполняем коллбек на увеличение прогресса выполнения
                     # Передаём -1 в качестве id карты
                     self.progress_step(-1)
                     continue
 
-                folder_id = int(folder_id_match.group(1))
                 # Выполняем коллбек на увеличение прогресса выполнения
                 self.progress_step(folder_id)
 
-                # Пропускаем, если эта карта уже обработана
+                # Если этот id карты уже обработан
                 if folder_id in self.processed_folders:
+                    # Если этот id - дубликат, то удаляем папку
+                    if self._is_id_duplicate(folders, folder_id):
+                        shutil.rmtree(folder)
+                    # Пропускаем папку
                     continue
 
                 # Запускаем очистку папки карты
@@ -171,3 +174,17 @@ class Cleaner:
                 raise CleanError(e, folder)
 
         self.__dump_proc_folders()
+
+    def _get_folder_id(self, folder: Path) -> int:
+        """Получает ID карты из её названия"""
+        folder_id_match = re.match(r'^(\d+)', folder.name)
+        if not folder_id_match:
+            return -1
+        return int(folder_id_match.group(1))
+
+    def _is_id_duplicate(self, folders: list[Path], folder_id: int) -> bool:
+        folders_with_id = [
+            f for f in folders
+            if self._get_folder_id(f) == folder_id
+        ]
+        return len(folders_with_id) > 1
