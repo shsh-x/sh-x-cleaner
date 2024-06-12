@@ -214,7 +214,8 @@ class SHXCleanerApp(QMainWindow):
         elif self.white_var.isChecked():
             user_images = {
                 ".png": get_resource_path("assets/white.png"),
-                ".jpg": get_resource_path("assets/white.jpg")
+                ".jpg": get_resource_path("assets/white.jpg"),
+                ".jpeg": get_resource_path("assets/white.jpg")
             }
             delete_images = False
         elif self.delete_var.isChecked():
@@ -230,10 +231,11 @@ class SHXCleanerApp(QMainWindow):
             if png_file:
                 user_images['.png'] = png_file
             jpg_file, _ = QFileDialog.getOpenFileName(
-                self, "Select JPG Image", "", "JPG Files (*.jpg)"
+                self, "Select JPEG Image", "", "JPEG Files (*.jpg *.jpeg)"
             )
             if jpg_file:
                 user_images['.jpg'] = jpg_file
+                user_images['.jpeg'] = jpg_file
 
             if not user_images:
                 user_images = None

@@ -7,7 +7,7 @@ from pathlib import Path
 from ..exceptions import OSUParsingError
 
 # \d+,\d+ на всякий случай, мало ли встретится не 0,0
-_IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+\.(?:jpg|png))\"')
+_IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+\.(?:jpe?g|png))\"')
 """Регулярное выражения для строки с изображением"""
 
 
