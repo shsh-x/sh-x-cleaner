@@ -1,14 +1,27 @@
-# Hello there
-
-This is a rough coded python script for cleaning osu! songs from junk.
-It basically removes everything except the difficulty files and the song itself.
-Optionally, you can choose a custom bg to replace in every song.
-
-## Requirements
-
-- Python 3.12
+# What is it?
+It's a script that cleans your osu! Songs folder of junk like hitsounds, videos, storyboards, and skin elements.
 
 ## How to use
+
+In the left section you can choose what modes to delete - it will devastate every difficulty with chosen mode.
+
+In the right section you can choose what to do with backgrounds:
+
+• Keep - leaves background images as is
+
+• White (recommended) - replaces all the bgs with 1x1px white image (67 bytes for .png and 153 bytes for .jpg/.jpeg) 
+
+• Custom - lets you choose your own image to replace all the bgs (you must choose both png and jpg/jpeg)
+
+• Delete - removes all the bgs (not recommended, you will see the annoying warning everytime the map starts)
+
+![Window preview](https://i.imgur.com/IxXT8hV.png)
+
+After choosing the desired options press 'Destroy everything' button, then choose your Songs folder (not osu! folder) and custom images if you selected custom backgrounds.
+
+While the script makes its' dirty work you can make some tea. In the progressbar you can see currently processing map's ID.
+
+## How to run
 
 To start doing funny things you can either:
 
@@ -17,7 +30,7 @@ To start doing funny things you can either:
 1. Download the `.exe` file from the [releases](https://github.com/shsh-x/sh-x-cleaner/releases/latest) section.
 2. Run the `.exe` file.
 
-### Build the Executable
+### Build the Executable (Python 3.12 required)
 
 If you prefer to build the executable yourself:
 
