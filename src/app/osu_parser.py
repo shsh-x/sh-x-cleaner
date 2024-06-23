@@ -71,10 +71,10 @@ class OSUParser:
 
                     if line.startswith("AudioFilename: "):
                         # Нашли строчку с AudioFilename
-                        audio_filename = line.split(": ")[1].strip()
+                        audio_filename = line.split(": ")[1].strip().lower()
                     elif match := re.match(_IMG_LINE_REGEX, line):
                         # Нашли строчку с изображением
-                        image_filenames.add(match.group(1))
+                        image_filenames.add(match.group(1).lower())
                     elif line.startswith("Mode: "):
                         mode = OSUGameModes(int(line.split(": ")[1].strip()))
         except UnicodeDecodeError as e:
@@ -84,7 +84,9 @@ class OSUParser:
         except Exception as e:
             raise OSUParsingError(e, file_path)
 
-        return OSUFile(file_path.name, audio_filename, image_filenames, mode)
+        return OSUFile(
+            file_path.name.lower(), audio_filename, image_filenames, mode
+        )
 
     @staticmethod
     def parse_folder(

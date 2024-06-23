@@ -50,18 +50,19 @@ class _FolderCleaner:
         for file in os.listdir(self.folder_path):
             try:
                 file_path = Path(self.folder_path, file)
+                filename = file_path.name.lower()
 
                 # Пропускаем, если файл в известных osu файлах
-                if file_path.name in self.of_folder.osu_filenames:
+                if filename in self.of_folder.osu_filenames:
                     continue
                 # Пропускаем, если файл в известных аудио файлах
-                if file_path.name in self.of_folder.audio_filenames:
+                if filename in self.of_folder.audio_filenames:
                     continue
                 # Пропускаем, если файл в известных изображениях файлах
                 # И не стоит параметра на удаление изображений
                 if (
                     not self.params['delete_images']
-                    and file_path.name in self.of_folder.image_filenames
+                    and filename in self.of_folder.image_filenames
                 ):
                     continue
 
