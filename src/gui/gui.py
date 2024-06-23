@@ -2,7 +2,7 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFontDatabase, QIcon
 from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFileDialog,
                              QHBoxLayout, QLabel, QMainWindow, QMessageBox,
@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFileDialog,
 
 from ..app.cleaner import CleanerParams
 from ..app.osu_parser import OSUGameModes
+from ..app.version import REPO_RELEASE_URL, check_for_updates
 from ..utils import get_resource_path
 from .cleaner_qworker import CleanerWorkerThread
 from .title_bar import TitleBar
@@ -38,6 +39,7 @@ class SHXCleanerApp(QMainWindow):
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
 
         self.init_components()
+
         self.center_window(320, 250)
         self.setStyleSheet(f"QWidget {{ font-family: {font_family};}}")
 
@@ -190,6 +192,30 @@ class SHXCleanerApp(QMainWindow):
         """)
         self.start_button.clicked.connect(self.start_cleaning)
         self.main_layout.addWidget(self.start_button)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, self.check_updates)
+
+    def check_updates(self):
+        is_update_available, latest_version = check_for_updates()
+        if not is_update_available:
+            return
+
+        mbox_result = QMessageBox.information(
+            self,
+            "Доступно обновление",
+            (
+                f"Доступна новая версия: {latest_version}\n"
+                "Хотите открыть страницу релиза?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if mbox_result != QMessageBox.StandardButton.Yes:
+            return
+
+        import webbrowser
+        webbrowser.open(REPO_RELEASE_URL)
 
     def center_window(self, width, height):
         """Центрирует окно приложения на экране"""
