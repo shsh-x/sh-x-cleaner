@@ -182,7 +182,9 @@ class Cleaner:
     def _map_folders_ids(self, folders: list[Path]) -> dict[Path, int]:
         result: dict[Path, int] = {}
         for folder in folders:
-            result[folder] = self._get_folder_id(folder)
+            if (id := self ._ get_folder_id(folder)) == -1:
+                continue
+            result[folder] = id
         return result
 
     def _get_folder_id(self, folder: Path) -> int:
