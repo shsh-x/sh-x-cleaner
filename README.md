@@ -1,5 +1,8 @@
-# What is it?
-It's a script that cleans your osu! Songs folder of junk like hitsounds, videos, storyboards, and skin elements.
+The functional part of the tool will soon migrate to ultimate osu toolbox that is currently in development.
+Watch this repo to not to miss the news about new release!
+
+## What is it?
+It's a script that cleans your osu!stable songs folder of junk like hitsounds, videos, storyboards, and skin elements.
 
 ## How to use
 
