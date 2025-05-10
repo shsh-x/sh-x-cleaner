@@ -1,5 +1,6 @@
-The functional part of the tool will soon migrate to ultimate osu toolbox that is currently in development.
-Watch this repo to not to miss the news about new release!
+⚠️ **THIS REPO HAS BEEN ARCHIVED AND WILL NO LONGER BE UPDATED** ⚠️
+
+🐾 **Please, check [Paws – our new cross platform toolbox](https://github.com/shsh-x/paws), it's better in every way!** 🐾
 
 ## What is it?
 It's a script that cleans your osu!stable songs folder of junk like hitsounds, videos, storyboards, and skin elements.
