@@ -235,10 +235,10 @@ class Cleaner:
         if not folder.name[0].isdigit():
             return None  # This folder has no numeric prefix at all.
 
-        # The regex checks for a number followed by a space at the start of the name.
+        # The regex checks for a number followed by an optional space and any characters.
         # The length of the number depends on the "Ignore ID Limit" setting.
         ignore_limit = self.params.get('ignore_id_limit', False)
-        regex = r'^(\d+)\s' if ignore_limit else r'^(\d{1,8})\s'
+        regex = r'^(\d+)(?:\s.*)?$' if ignore_limit else r'^(\d{1,8})(?:\s.*)?$'
         
         match = re.match(regex, folder.name)
         if match:
