@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QMouseEvent
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
+from PyQt6.QtGui import QAction, QContextMenuEvent, QIcon, QMouseEvent
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMenu, QToolButton, QWidget
 
 from ..utils import get_resource_path
 
@@ -12,12 +12,17 @@ class TitleBar(QWidget):
         self.setAutoFillBackground(True)
         self.initial_pos = None
 
+        # Advanced options
+        self.force_clean = False
+        self.keep_videos = False
+        self.ignore_id_limit = False
+        self.dangerous_clean_no_id = False
+
         title_bar_layout = QHBoxLayout(self)
         title_bar_layout.setContentsMargins(0, 0, 0, 0)
         title_bar_layout.setSpacing(0)
 
-        # Тайтл
-
+        # Title
         self.title = QLabel(f"{self.__class__.__name__}", self)
         self.title.setStyleSheet(
             """
@@ -36,28 +41,25 @@ class TitleBar(QWidget):
 
         title_bar_layout.addWidget(self.title)
 
-        # КНОМПОЧКИ
-
+        # BUTTONS
         self.min_button = QToolButton(self)
         self.close_button = QToolButton(self)
-        # Ставим иконки, если получен стиль
 
-        # Иконка для кномпочки сворачивания
+        # Set icons
         min_icon = QIcon()
         min_icon.addFile(get_resource_path('assets/min.svg'))
         self.min_button.setIcon(min_icon)
 
-        # Иконка для кномпочки закрытия
         close_icon = QIcon()
         close_icon.addFile(get_resource_path('assets/close.svg'))
         self.close_button.setIcon(close_icon)
 
-        # Коннектим клики, если есть окно
+        # Connect clicks
         if window := self.window():
             self.min_button.clicked.connect(window.showMinimized)
             self.close_button.clicked.connect(window.close)
 
-        # Остальные настройки кномпочек
+        # Other button settings
         for button in [
             self.min_button,
             self.close_button,
@@ -71,7 +73,52 @@ class TitleBar(QWidget):
             """)
             title_bar_layout.addWidget(button)
 
-    # ДВИГОЕМ ОКНО
+    def contextMenuEvent(self, event: QContextMenuEvent):
+        menu = QMenu(self)
+
+        # Force clean
+        force_clean_action = QAction('Force clean (ignore processed)', self)
+        force_clean_action.setCheckable(True)
+        force_clean_action.setChecked(self.force_clean)
+        force_clean_action.toggled.connect(self.on_force_clean_toggled)
+        menu.addAction(force_clean_action)
+
+        # Keep videos
+        keep_videos_action = QAction('Keep videos', self)
+        keep_videos_action.setCheckable(True)
+        keep_videos_action.setChecked(self.keep_videos)
+        keep_videos_action.toggled.connect(self.on_keep_videos_toggled)
+        menu.addAction(keep_videos_action)
+
+        # Ignore id limit
+        ignore_id_limit_action = QAction('Ignore id limit', self)
+        ignore_id_limit_action.setCheckable(True)
+        ignore_id_limit_action.setChecked(self.ignore_id_limit)
+        ignore_id_limit_action.toggled.connect(self.on_ignore_id_limit_toggled)
+        menu.addAction(ignore_id_limit_action)
+
+        # Dangerous clean no id
+        dangerous_clean_no_id_action = QAction('Dangerously clean folders with no id', self)
+        dangerous_clean_no_id_action.setCheckable(True)
+        dangerous_clean_no_id_action.setChecked(self.dangerous_clean_no_id)
+        dangerous_clean_no_id_action.toggled.connect(self.on_dangerous_clean_no_id_toggled)
+        menu.addAction(dangerous_clean_no_id_action)
+
+        menu.exec(event.globalPos())
+
+    def on_force_clean_toggled(self, checked: bool):
+        self.force_clean = checked
+
+    def on_keep_videos_toggled(self, checked: bool):
+        self.keep_videos = checked
+
+    def on_ignore_id_limit_toggled(self, checked: bool):
+        self.ignore_id_limit = checked
+
+    def on_dangerous_clean_no_id_toggled(self, checked: bool):
+        self.dangerous_clean_no_id = checked
+
+    # WINDOW DRAGGING
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.initial_pos = event.position().toPoint()

@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import QApplication
 
 
 def set_theme(app: QApplication):
-    """Установка глобальной темы приложения"""
-    # Установка палитры цветов (для фиксированной темы на разных устройствах)
+    """Sets the global theme for the application."""
+    # Set the color palette (for a fixed theme across different devices)
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.WindowText, QColor          ('#2E3036'))    # BGs+Modes (actually +title but nvm)
     palette.setColor(QPalette.ColorRole.Text, QColor                ('#5A77AB'))    # ID in progressbar
@@ -14,5 +14,5 @@ def set_theme(app: QApplication):
     palette.setColor(QPalette.ColorRole.Window, QColor              ('#F9F9FF'))    # Background
     app.setPalette(palette)
 
-    # Отключение Focus Rectangle на элементах
+    # Disable the focus rectangle on elements
     app.setStyleSheet("*:focus { outline: none; }")

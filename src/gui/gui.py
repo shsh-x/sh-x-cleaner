@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QApplication, QButtonGroup, QFileDialog,
                              QHBoxLayout, QLabel, QMainWindow, QMessageBox,
                              QProgressBar, QPushButton, QVBoxLayout, QWidget)
 
-from ..app.cleaner import CleanerParams
+from ..app.types import CleanerParams
 from ..app.osu_parser import OSUGameModes
 from ..app.version import REPO_RELEASE_URL, check_for_updates
 from ..utils import get_resource_path
@@ -19,7 +19,7 @@ font_path = get_resource_path("assets/Exo2.ttf")
 
 
 class BackgroundModes(Enum):
-    """Enum описывающий настройки работы с фонами"""
+    """Enum describing the background replacement modes."""
     KEEP = "Keep"
     WHITE = "White"
     CUSTOM = "Custom"
@@ -44,8 +44,8 @@ class SHXCleanerApp(QMainWindow):
         self.setStyleSheet(f"QWidget {{ font-family: {font_family};}}")
 
     def init_components(self):
-        """Инициализирует компоненты GUI"""
-        # Виджет всего окна
+        """Initializes the GUI components."""
+        # Main window widget
         self.central_widget = QWidget(self)
         centra_widget_layout = QVBoxLayout()
         centra_widget_layout.setContentsMargins(0, 0, 0, 0)
@@ -54,17 +54,17 @@ class SHXCleanerApp(QMainWindow):
         self.central_widget.setStyleSheet("")
         self.setCentralWidget(self.central_widget)
 
-        # Добавляем тайтл (ОН В ОТДЕЛЬНОМ КЛАССЕ)
+        # Add the custom title bar
         self.title_bar = TitleBar(self)
         centra_widget_layout.addWidget(self.title_bar)
 
-        # Основной лэйаут приложения
+        # Main application layout
         self.main_layout = QVBoxLayout()
         self.main_layout.setSpacing(20)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
         centra_widget_layout.addLayout(self.main_layout)
 
-        # Фреймы
+        # Frames
         self.top_frame = QHBoxLayout()
         self.main_layout.addLayout(self.top_frame)
 
@@ -159,7 +159,7 @@ class SHXCleanerApp(QMainWindow):
             self.backgrounds_group.addButton(button)
             self.right_frame.addWidget(button)
 
-        # Прогресс бар
+        # Progress bar
         self.progress = QProgressBar()
         self.progress.setStyleSheet("""
             QProgressBar {
@@ -204,10 +204,10 @@ class SHXCleanerApp(QMainWindow):
 
         mbox_result = QMessageBox.information(
             self,
-            "Доступно обновление",
+            "Update available",
             (
-                f"Доступна новая версия: {latest_version}\n"
-                "Хотите открыть страницу релиза?"
+                f"A new version is available: {latest_version}\n"
+                "Do you want to open the release page?"
             ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
@@ -218,7 +218,7 @@ class SHXCleanerApp(QMainWindow):
         webbrowser.open(REPO_RELEASE_URL)
 
     def center_window(self, width, height):
-        """Центрирует окно приложения на экране"""
+        """Centers the application window on the screen."""
         if not (screen := QApplication.primaryScreen()):
             return
 
@@ -228,12 +228,12 @@ class SHXCleanerApp(QMainWindow):
         self.setGeometry(x, y, width, height)
 
     def pick_params(self) -> CleanerParams:
-        """Собирает параметры очистки из GUI"""
+        """Gathers the cleaning parameters from the GUI."""
         user_images: dict[str, str] | None = None
         delete_images: bool = False
         delete_modes: list[OSUGameModes] = []
 
-        # Параметры работы с фоном
+        # Background options
         if self.keep_var.isChecked():
             user_images = None
             delete_images = False
@@ -266,7 +266,7 @@ class SHXCleanerApp(QMainWindow):
             if not user_images:
                 user_images = None
 
-        # Параметры работы с режимами игры
+        # Game mode options
         if self.osu_var.isChecked():
             delete_modes.append(OSUGameModes.OSU)
         if self.taiko_var.isChecked():
@@ -279,30 +279,55 @@ class SHXCleanerApp(QMainWindow):
         return {
             "user_images": user_images,
             "delete_images": delete_images,
-            "delete_modes": delete_modes
+            "delete_modes": delete_modes,
+            "force_clean": self.title_bar.force_clean,
+            "keep_videos": self.title_bar.keep_videos,
+            "ignore_id_limit": self.title_bar.ignore_id_limit,
+            "dangerous_clean_no_id": self.title_bar.dangerous_clean_no_id,
         }
 
     def start_cleaning(self):
-        """Выполняет итоговую подготовку и запускает очистку карт"""
-        songs_folder = QFileDialog.getExistingDirectory(
-            self, "Select Songs Folder"
+        """Performs final preparations and starts the cleaning process."""
+        osu_exe_path_str, _ = QFileDialog.getOpenFileName(
+            self, "Select osu!.exe", "", "osu! executable (osu!.exe)"
         )
-        if not songs_folder:
-            QMessageBox.critical(self, "Fatal error", "Why you...")
+        if not osu_exe_path_str:
             return
 
-        # Получаем все вложенные папки
-        folders = [
-            Path(songs_folder, f) for f in os.listdir(songs_folder)
-            if Path(songs_folder, f).is_dir()
-        ]
+        osu_exe_path = Path(osu_exe_path_str)
+        if osu_exe_path.name.lower() != "osu!.exe":
+            QMessageBox.critical(
+                self, "Error", "You must select the osu!.exe file."
+            )
+            return
+
+        songs_folder_path = osu_exe_path.parent.joinpath("Songs")
+        if not songs_folder_path.is_dir():
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Could not find the 'Songs' folder in the same directory as osu!.exe."
+            )
+            return
+
+        params = self.pick_params()
+        if len(params['delete_modes']) == 4:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "You can delete your songs folder manually if you want to."
+            )
+            return
+
+        # Get all subfolders
+        folders = [f for f in songs_folder_path.iterdir() if f.is_dir()]
         self.progress.setMaximum(len(folders))
         self.progress.setValue(0)
 
         self.start_button.setEnabled(False)
 
         self.worker_thread = CleanerWorkerThread(
-            Path(songs_folder), self.pick_params(), folders
+            songs_folder_path.resolve(), params, folders
         )
         self.worker_thread.progress.connect(self.__update_progress)
         self.worker_thread.finished.connect(self.__on_cleaning_finished)
@@ -311,7 +336,7 @@ class SHXCleanerApp(QMainWindow):
 
     def __update_progress(self, folder_id: int):
         self.progress.setValue(self.progress.value() + 1)
-        # Не устанавливаем id карты в прогресс, если id == -1
+        # Don't set the beatmap ID in the progress bar if the ID is -1
         if folder_id != -1:
             self.progress.setFormat(str(folder_id))
 
@@ -326,7 +351,7 @@ class SHXCleanerApp(QMainWindow):
     def __on_cleaning_error(self, msg: str):
         QMessageBox.critical(
             self,
-            "An error occured",
+            "An error occurred",
             f"An error occurred (for more info look terminal):\n{msg}"
         )
         self.close()

@@ -1,50 +1,47 @@
 import os
 import re
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 
 from ..exceptions import OSUParsingError
+from .types import OSUGameModes
 
-# \d+,\d+ на всякий случай, мало ли встретится не 0,0
+# The \d+,\d+ is a fallback, in case it's not 0,0
 _IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+\.(?:jpe?g|png))\"')
-"""Регулярное выражения для строки с изображением"""
-
-
-class OSUGameModes(Enum):
-    """Enum описывающий режимы игры"""
-    OSU = 0
-    TAIKO = 1
-    CATCH = 2
-    MANIA = 3
+"""Regex for a line with a background image."""
+_VIDEO_LINE_REGEX = re.compile(r'^Video,\d*,.?\"(.+\.(?:avi|mp4|flv))\"')
 
 
 @dataclass
 class OSUFile:
-    """Класс описывающий файл osu"""
+    """A class describing an .osu file."""
 
     filename: str
-    """Имя файла"""
+    """Filename"""
     audio_filename: str
-    """Имя аудио файла"""
+    """Audio filename"""
     image_filenames: set[str]
-    """Имена файлов изображений"""
+    """Image filenames"""
+    video_filenames: set[str]
+    """Video filenames"""
     mode: OSUGameModes
-    """Режим игры"""
+    """Game mode"""
 
 
 @dataclass
 class OSUFilesFolder:
-    """Класс описывающий папку файлов osu"""
+    """A class describing a folder of .osu files."""
 
     osu_files: list[OSUFile]
-    """Объекты файлов osu"""
+    """.osu file objects"""
     osu_filenames: set[str]
-    """Имена файлов osu"""
+    """.osu filenames"""
     audio_filenames: set[str]
-    """Имена аудио файлов"""
+    """Audio filenames"""
     image_filenames: set[str]
-    """Имена файлов изображений"""
+    """Image filenames"""
+    video_filenames: set[str]
+    """Video filenames"""
 
 
 class OSUParser:
@@ -56,25 +53,28 @@ class OSUParser:
 
     @staticmethod
     def parse_file(file_path: Path, encoding_num: int = 0) -> OSUFile:
-        """Парсинг osu-файла."""
+        """Parses an .osu file."""
         audio_filename: str = ""
         image_filenames: set[str] = set()
+        video_filenames: set[str] = set()
         mode: OSUGameModes = OSUGameModes.OSU
 
         try:
             encoding = OSUParser.possible_encodings[encoding_num]
             with open(file_path, 'r', encoding=encoding) as file:
                 for line in file:
-                    # Пропускаем комментарии
+                    # Skip comments
                     if line.strip().startswith("//"):
                         continue
 
                     if line.startswith("AudioFilename: "):
-                        # Нашли строчку с AudioFilename
+                        # Found the AudioFilename line
                         audio_filename = line.split(": ")[1].strip().lower()
                     elif match := re.match(_IMG_LINE_REGEX, line):
-                        # Нашли строчку с изображением
+                        # Found a line with an image
                         image_filenames.add(match.group(1).lower())
+                    elif match := re.match(_VIDEO_LINE_REGEX, line):
+                        video_filenames.add(match.group(1).lower())
                     elif line.startswith("Mode: "):
                         mode = OSUGameModes(int(line.split(": ")[1].strip()))
         except UnicodeDecodeError as e:
@@ -85,7 +85,11 @@ class OSUParser:
             raise OSUParsingError(e, file_path)
 
         return OSUFile(
-            file_path.name.lower(), audio_filename, image_filenames, mode
+            file_path.name.lower(),
+            audio_filename,
+            image_filenames,
+            video_filenames,
+            mode
         )
 
     @staticmethod
@@ -93,10 +97,11 @@ class OSUParser:
         folder_path: Path,
         skip_modes: list[OSUGameModes]
     ) -> OSUFilesFolder:
-        """Парсинг папки с osu-файлами."""
+        """Parses a folder containing .osu files."""
         osu_files: list[OSUFile] = []
         audio_filenames: set[str] = set()
         image_filenames: set[str] = set()
+        video_filenames: set[str] = set()
 
         for file in os.listdir(folder_path):
             if not file.endswith('.osu'):
@@ -104,12 +109,13 @@ class OSUParser:
 
             file_path = Path(folder_path, file)
             osu_file = OSUParser.parse_file(file_path)
-            # Пропускаем файл с ненужным режимом
+            # Skip files with unwanted game modes
             if osu_file.mode in skip_modes:
                 continue
             osu_files.append(osu_file)
 
             image_filenames.update(osu_file.image_filenames)
+            video_filenames.update(osu_file.video_filenames)
             if osu_file.audio_filename:
                 audio_filenames.add(osu_file.audio_filename)
 
@@ -117,5 +123,6 @@ class OSUParser:
             osu_files,
             set([osu_file.filename for osu_file in osu_files]),
             audio_filenames,
-            image_filenames
+            image_filenames,
+            video_filenames
         )
