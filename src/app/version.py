@@ -2,7 +2,7 @@ import re
 
 import requests
 
-CURRENT_VERSION = "2.2"
+CURRENT_VERSION = "3.0"
 
 REPO = "shsh-x/sh-x-cleaner"
 REPO_API_URL = f"https://api.github.com/repos/{REPO}/releases/latest"
