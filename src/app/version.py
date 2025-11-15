@@ -2,7 +2,7 @@ import re
 
 import requests
 
-CURRENT_VERSION = "2.2"
+CURRENT_VERSION = "3.0"
 
 REPO = "shsh-x/sh-x-cleaner"
 REPO_API_URL = f"https://api.github.com/repos/{REPO}/releases/latest"
@@ -18,7 +18,7 @@ def __get_latest_release_tag() -> str:
 
 
 def __parse_version(ver: str) -> tuple:
-    ver = re.sub(r'^[vV\.]+', '', ver)  # Убираем префиксы 'v', 'V' или '.'
+    ver = re.sub(r'^[vV\.]+', '', ver)
     return tuple(map(int, re.split(r'[^\d]+', ver)))
 
 

@@ -3,7 +3,7 @@ import shlex
 import subprocess
 from pathlib import Path
 
-# Скрипт запуска One-File EXE проекта
+# Script to build the One-File EXE for the project
 
 if __name__ == "__main__":
     name = "sh(x)cleaner"
@@ -21,14 +21,14 @@ if __name__ == "__main__":
     use_venv = False
     venv_path = "venv"
 
-    # Убеждаемся, что pyinstaller установлен
+    # Make sure pyinstaller is installed
     try:
         importlib.util.find_spec("pyinstaller")
     except ImportError:
         print("Pyinstaller module not installed")
         exit()
 
-    # Формируем команду сборки
+    # Form the build command
     command = ["pyinstaller", "--onefile", "--clean"]
     if noconsole:
         command.append("--noconsole")
@@ -47,5 +47,5 @@ if __name__ == "__main__":
     command.append(str(Path(entry_point).resolve()))
 
     print(f"Running: {shlex.join(command)}")
-    # Собираем
+    # Build the executable
     subprocess.run(command)
