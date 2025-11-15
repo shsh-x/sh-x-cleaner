@@ -41,6 +41,7 @@ class _FolderCleaner:
             return
 
         self.__delete_trash()
+        self.__cleanup_empty_dirs()
 
         # If, after cleaning, no .osu files remain, the folder is now empty.
         if not list(self.folder_path.glob("*.osu")):
@@ -51,40 +52,66 @@ class _FolderCleaner:
 
     def __delete_trash(self):
         """
-        Iterates through all files and subdirectories, deleting anything that isn't
-        explicitly marked for preservation (like essential .osu files, audio, etc.).
+        Deletes all non-essential files by recursively walking the folder.
+
+        This method works by first building a set of all files that are required
+        (osu files, audio, referenced images/videos). It then walks the entire
+        directory tree and removes any file whose relative path is not in this
+        "keep set".
         """
-        for item_path in self.folder_path.iterdir():
+        # 1. Build the set of files to keep.
+        # The paths are normalized to use forward slashes, matching osu!'s format.
+        files_to_keep = {
+            p.replace(os.path.sep, '/') for p in self.of_folder.osu_filenames
+        }
+        files_to_keep.update(
+            p.replace(os.path.sep, '/') for p in self.of_folder.audio_filenames
+        )
+
+        if self.params.get('keep_videos', False):
+            files_to_keep.update(
+                p.replace(os.path.sep, '/') for p in self.of_folder.video_filenames
+            )
+
+        # Images are only kept if no delete/replace option is active.
+        if not self.params['delete_images'] and not self.params.get('user_images'):
+            files_to_keep.update(
+                p.replace(os.path.sep, '/') for p in self.of_folder.image_filenames
+            )
+
+        # 2. Walk the directory and delete files not in the keep set.
+        for root, _, files in os.walk(self.folder_path):
+            for file in files:
+                try:
+                    full_path = Path(root, file)
+                    relative_path = full_path.relative_to(self.folder_path)
+                    
+                    # Normalize path to use forward slashes for comparison.
+                    normalized_relative_path = str(relative_path).replace(os.path.sep, '/')
+
+                    if normalized_relative_path.lower() not in files_to_keep:
+                        full_path.unlink()
+
+                except Exception as e:
+                    raise CleanError(e, self.folder_path, file)
+
+    def __cleanup_empty_dirs(self):
+        """
+        Removes any empty subdirectories that may have been left behind after
+        deleting junk files. It walks the tree from the bottom up.
+        """
+        for root, _, _ in os.walk(self.folder_path, topdown=False):
+            # Don't attempt to delete the root folder itself in this loop.
+            if Path(root) == self.folder_path:
+                continue
             try:
-                filename = item_path.name.lower()
-
-                # The core principle is "delete by default" unless a file matches
-                # a condition to be kept.
-
-                # Keep essential .osu files that weren't deleted by mode selection.
-                if filename in self.of_folder.osu_filenames:
-                    continue
-                # Keep the main audio file.
-                if filename in self.of_folder.audio_filenames:
-                    continue
-                # Keep video files if the user checked the "Keep videos" option.
-                if self.params.get('keep_videos', False) and filename in self.of_folder.video_filenames:
-                    continue
-                # Keep image files ONLY if the user has NOT chosen to delete/replace them.
-                if (
-                    not self.params['delete_images']
-                    and not self.params.get('user_images')
-                    and filename in self.of_folder.image_filenames
-                ):
-                    continue
-
-                # If no "keep" condition was met, delete the item.
-                if item_path.is_dir():
-                    shutil.rmtree(item_path)
-                else:
-                    item_path.unlink()
-            except Exception as e:
-                raise CleanError(e, self.folder_path, item_path.name)
+                if not os.listdir(root):
+                    os.rmdir(root)
+            except OSError as e:
+                # This can happen if a file is deleted but the handle is not yet released.
+                # It's generally safe to ignore.
+                print(f"Could not remove empty directory {root}: {e}")
+                continue
 
     def __replace_images(self):
         """
@@ -117,6 +144,10 @@ class _FolderCleaner:
                         continue
 
                     source_image_path = user_imgs[img_suffix]
+
+                    # Ensure the destination directory exists before creating the symlink.
+                    # This is crucial if the original file was in a subfolder that got deleted.
+                    img_file_path.parent.mkdir(parents=True, exist_ok=True)
 
                     # Delete the original file (if it exists) and create a symlink.
                     img_file_path.unlink(missing_ok=True)

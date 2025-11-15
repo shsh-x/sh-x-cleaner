@@ -7,12 +7,13 @@ from ..exceptions import OSUParsingError
 from .types import OSUGameModes
 
 # This regex is designed to find background image declarations in the [Events] section.
-# Example: 0,0,"bg.jpg",0,0
-_IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+\.(?:jpe?g|png))\"', re.IGNORECASE)
+# It now correctly captures file paths that may contain forward slashes (subdirectories).
+# Example: 0,0,"sb/bg.jpg",0,0
+_IMG_LINE_REGEX = re.compile(r'^\d+,\d+,\"(.+?\.(?:jpe?g|png))\"', re.IGNORECASE)
 
-# This regex finds video declarations in the [Events] section.
-# Example: Video,1000,"video.mp4"
-_VIDEO_LINE_REGEX = re.compile(r'^Video,\d*,.?\"(.+\.(?:avi|mp4|flv))\"', re.IGNORECASE)
+# This regex finds video declarations in the [Events] section, also handling subdirectories.
+# Example: Video,1000,"videos/intro.mp4"
+_VIDEO_LINE_REGEX = re.compile(r'^Video,\d*,.?\"(.+?\.(?:avi|mp4|flv))\"', re.IGNORECASE)
 
 
 @dataclass
@@ -82,11 +83,11 @@ class OSUParser:
                         continue
 
                     if line.startswith("AudioFilename: "):
-                        audio_filename = line.split(":", 1)[1].strip().lower()
+                        audio_filename = os.path.normpath(line.split(":", 1)[1].strip()).lower()
                     elif match := _IMG_LINE_REGEX.match(line):
-                        image_filenames.add(match.group(1).lower())
+                        image_filenames.add(os.path.normpath(match.group(1)).lower())
                     elif match := _VIDEO_LINE_REGEX.match(line):
-                        video_filenames.add(match.group(1).lower())
+                        video_filenames.add(os.path.normpath(match.group(1)).lower())
                     elif line.startswith("Mode: "):
                         mode = OSUGameModes(int(line.split(":", 1)[1].strip()))
         except UnicodeDecodeError as e:
