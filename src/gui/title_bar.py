@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QPoint, QSize, Qt
 from PyQt6.QtGui import QAction, QContextMenuEvent, QIcon, QMouseEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMenu, QToolButton, QWidget
 
@@ -104,7 +104,18 @@ class TitleBar(QWidget):
         dangerous_clean_no_id_action.toggled.connect(self.on_dangerous_clean_no_id_toggled)
         menu.addAction(dangerous_clean_no_id_action)
 
-        menu.exec(event.globalPos())
+        main_window = self.window()
+        if not main_window:
+            menu.exec(event.globalPos())
+            return
+
+        # Calculate centered position
+        menu_width = menu.sizeHint().width()
+        target_x = main_window.x() + (main_window.width() - menu_width) / 2
+        target_y = main_window.y() + self.height()
+
+        point = QPoint(int(target_x), int(target_y))
+        menu.exec(point)
 
     def on_force_clean_toggled(self, checked: bool):
         self.force_clean = checked
