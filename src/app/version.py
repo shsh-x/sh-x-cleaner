@@ -18,7 +18,7 @@ def __get_latest_release_tag() -> str:
 
 
 def __parse_version(ver: str) -> tuple:
-    ver = re.sub(r'^[vV\.]+', '', ver)  # Убираем префиксы 'v', 'V' или '.'
+    ver = re.sub(r'^[vV\.]+', '', ver)
     return tuple(map(int, re.split(r'[^\d]+', ver)))
 
 
