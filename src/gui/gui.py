@@ -34,6 +34,7 @@ class SHXCleanerApp(QMainWindow):
         icon = QIcon(get_resource_path("assets/icon.ico"))
         self.setWindowIcon(icon)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         font_id = QFontDatabase.addApplicationFont(font_path)
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -47,6 +48,7 @@ class SHXCleanerApp(QMainWindow):
         """Initializes the GUI components."""
         # Main window widget
         self.central_widget = QWidget(self)
+        self.central_widget.setObjectName("centralWidget")
         centra_widget_layout = QVBoxLayout()
         centra_widget_layout.setContentsMargins(0, 0, 0, 0)
         centra_widget_layout.setAlignment(Qt.AlignmentFlag.AlignTop)

@@ -1,6 +1,7 @@
 from PyQt6.QtCore import QPoint, QSize, Qt
-from PyQt6.QtGui import QAction, QContextMenuEvent, QIcon, QMouseEvent
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMenu, QToolButton, QWidget
+from PyQt6.QtGui import QAction, QColor, QContextMenuEvent, QIcon, QMouseEvent
+from PyQt6.QtWidgets import (QGraphicsDropShadowEffect, QHBoxLayout, QLabel,
+                             QMenu, QToolButton, QWidget)
 
 from ..utils import get_resource_path
 
@@ -74,7 +75,25 @@ class TitleBar(QWidget):
             title_bar_layout.addWidget(button)
 
     def contextMenuEvent(self, event: QContextMenuEvent):
+        # Only show the context menu if the click is on the title label
+        if not self.title.geometry().contains(event.pos()):
+            return
+
         menu = QMenu(self)
+
+        # These flags are necessary to prevent rendering artifacts (like black corners)
+        # when using border-radius in QSS on a top-level widget like QMenu.
+        menu.setWindowFlags(menu.windowFlags() | Qt.WindowType.FramelessWindowHint)
+        menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+        # This effect, in combination with a QSS border, creates the desired 1px outline
+        # by causing a rendering conflict. It is intentionally left minimal.
+        # shadow = QGraphicsDropShadowEffect(menu)
+        # shadow.setBlurRadius(5)
+        # shadow.setXOffset(0)
+        # shadow.setYOffset(0)
+        # shadow.setColor(QColor(0, 0, 0, 1)) # Almost transparent, just to trigger the effect
+        # menu.setGraphicsEffect(shadow)
 
         # Force clean
         force_clean_action = QAction('Force clean (ignore processed)', self)
