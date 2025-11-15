@@ -29,7 +29,7 @@ def set_theme(app: QApplication):
         }
         /* Apply rounding and border to the main window */
         QMainWindow {
-            border-radius: 10px;
+            border-radius: 8px;
         }
         #centralWidget {
             background-color: palette(window);
